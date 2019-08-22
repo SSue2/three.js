@@ -52,7 +52,7 @@
 				spherical: { url: 'textures/envmap.png' }
 			};
 
-			var param = { example: new URL( window.location.href ).searchParams.get( 'e' ) || 'mesh-standard' };
+			var param = { example: new URL( window.location.href ).searchParams.get( 'e' ) || 'node-tint' };
 
 			function getTexture( name ) {
 
@@ -225,6 +225,7 @@
 					'node / position': 'node-position',
 					'node / normal': 'node-normal',
 					'node / reflect': 'node-reflect',
+					'node / tint': 'node-tint',
 					'misc / sub-slot': 'sub-slot',
 					'misc / smoke': 'smoke',
 					'misc / firefly': 'firefly',
@@ -2591,6 +2592,36 @@
 							mtl.needsUpdate = true;
 
 						} );
+
+						break;
+					case 'node-tint':
+
+						var tintFunction = new Nodes.FunctionNode( [
+								// Reference: TriangleBlurShader.js
+								"vec4 blurtexture(vec4 color, vec4 tint) {",
+								"	return color * tint;",
+								"}"
+							].join( "\n" ) );
+
+						var tintColor = new Nodes.ColorNode(0xffffff);
+
+						var tintedTexture = new Nodes.FunctionCallNode( tintFunction, {
+							color: new Nodes.TextureNode( getTexture( "brick" ) ),
+							tint: tintColor,
+						} );
+
+						// MATERIAL
+						mtl = new Nodes.StandardNodeMaterial();
+						mtl.color = tintedTexture;
+						mtl.normal = new Nodes.TriplanarNormalMapNode( new Nodes.TextureNode( getTexture( "decalNormal" ) ), new Nodes.FloatNode(.1), new Nodes.FloatNode(1) );
+						
+						// GUI
+
+						addGui( 'tint', 0xffffff, function ( val ) {
+							tintColor.value.setHex(val);
+							mtl.needsUpdate = true;
+
+						}, true );
 
 						break;
 
