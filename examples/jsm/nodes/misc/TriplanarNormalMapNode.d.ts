@@ -8,7 +8,7 @@ import { NormalNode } from '../accessors/NormalNode';
 import { PositionNode } from '../accessors/PositionNode';
 
 export class TriplanarNormalMapNode extends TempNode {
-    constructor(texture, scale, strength);
+    constructor(texture, scale, strength, rotation);
 
     generate(builder, output);
 }

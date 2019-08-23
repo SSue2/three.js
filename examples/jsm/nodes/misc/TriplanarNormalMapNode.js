@@ -70,7 +70,7 @@ class TriplanarNormalMapNode extends TempNode {
 
             normals = normals.concat(normal);
         });
-		console.log(normals.join('\n'));
+
         perturbNormal2Arb = perturbNormal2Arb.concat(normals);
 
         let nodeFunction = blend.concat(uvs, perturbNormal2Arb);
