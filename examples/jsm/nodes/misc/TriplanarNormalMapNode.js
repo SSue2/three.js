@@ -8,12 +8,13 @@ import { NormalNode } from '../accessors/NormalNode.js';
 import { PositionNode } from '../accessors/PositionNode.js';
 
 class TriplanarNormalMapNode extends TempNode {
-    constructor(texture, scale, strength) {
+    constructor(texture, scale, strength, rotation) {
         super('v3');
 
         this.texture = texture;
         this.scale = scale;
         this.strength = strength;
+        this.rotation = rotation;
     }
 
     generate(builder, output) {
@@ -56,22 +57,24 @@ class TriplanarNormalMapNode extends TempNode {
                 '	T = normalize((- q0 * st1.s + q1 * st0.s) * scale);',
                 '	N = normalize(eyeNormal);',
                 '	tsn = mat3(S, T, N);',
-
-                '	vec3 map' + axis + ' = texture2D(texture, uv' + axis + ').xyz * 2.0 - 1.0;',
+				`   mat3 rot${axis} = mat3(cos(rotation.${axis}),-sin(rotation.${axis}), 0.,`,
+				`                          sin(rotation.${axis}), cos(rotation.${axis}), 0.,`,
+				`                          0.                   ,                    0., 1.);`,
+				'	vec3 map' + axis + ' = texture2D(texture, mat2(rot' + axis + ') * uv' + axis + ').xyz * 2.0 - 1.0;',
 
                 '	map' + axis + '.xy *= normalScale;',
                 '	map' + axis + '.xy *= (float(gl_FrontFacing) * 2.0 - 1.0);',
 
-                '	vec3 normal' + axis + ' = normalize(tsn * (map' + axis + ' * blend.' + axis + '));'
-            ];
+                '	vec3 normal' + axis + ' = normalize(tsn * (rot' + axis + ' * map' + axis + ' * blend.' + axis + '));'
+			];
 
             normals = normals.concat(normal);
         });
-
+		console.log(normals.join('\n'));
         perturbNormal2Arb = perturbNormal2Arb.concat(normals);
 
         let nodeFunction = blend.concat(uvs, perturbNormal2Arb);
-        nodeFunction.unshift('vec3 normal_mapping(sampler2D texture, float textureScale, vec3 eyeNormal, vec3 localNormal, vec3 eyePosition, vec3 localPosition, vec2 normalScale) {');
+        nodeFunction.unshift('vec3 normal_mapping(sampler2D texture, float textureScale, vec3 eyeNormal, vec3 localNormal, vec3 eyePosition, vec3 localPosition, vec2 normalScale, vec3 rotation) {');
         nodeFunction = nodeFunction.concat(['    return normalize(normalx + normaly + normalz);', '}']);
 
         let normalMapping = new FunctionNode(nodeFunction.join('\n'), null, {derivatives: true});
@@ -83,7 +86,8 @@ class TriplanarNormalMapNode extends TempNode {
             new NormalNode(NormalNode.LOCAL).build(builder, 'v3'),
             new PositionNode(PositionNode.VIEW).build(builder, 'v3'),
             new PositionNode(PositionNode.LOCAL).build(builder, 'v3'),
-            this.strength.build(builder, 'v2')
+            this.strength.build(builder, 'v2'),
+            this.rotation.build(builder, 'v3')
         ];
 
         return builder.format(builder.include(normalMapping) + '(' + inputs.join(', ') + ')',
