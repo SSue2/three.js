@@ -19,13 +19,14 @@ class TriplanarNormalMapNode extends TempNode {
 
     generate(builder, output) {
         let blend = [
-            '   vec3 blend = vec3(0.0);',
+			'   vec3 blend = vec3(0.0);',
+			'   bool wrong = false;',
             '   vec2 xzBlend = abs(normalize(localNormal.xz));',
             '   blend.xz = max(vec2(0.0), xzBlend - 0.67);',
             '   blend.xz /= dot(blend.xz, vec2(1.0));',
-
             '   blend.y = clamp((abs(localNormal.y) - 0.675) * 80.0, 0.0, 1.0);',
-            '   blend.xz *= (1.0 - blend.y);'
+            '   blend.xz *= (1.0 - blend.y);',
+			'	wrong = length(blend) < 0.0 || length(blend) > 1.0;',
         ];
 
         let uvs = [
@@ -43,7 +44,7 @@ class TriplanarNormalMapNode extends TempNode {
             '   vec2 st0, st1;',
             '   float scale;',
             '   vec3 S, T, N;',
-            '   mat3 tsn;'
+			'   mat3 tsn;',
         ];
 
         ['x', 'y', 'z'].forEach(axis => {
@@ -65,7 +66,8 @@ class TriplanarNormalMapNode extends TempNode {
                 '	map' + axis + '.xy *= normalScale;',
                 '	map' + axis + '.xy *= (float(gl_FrontFacing) * 2.0 - 1.0);',
 
-                '	vec3 normal' + axis + ' = normalize(tsn * (rot' + axis + ' * map' + axis + ' * blend.' + axis + '));'
+                '	vec3 normal' + axis + ' = normalize(tsn * (rot' + axis + ' * map' + axis + ' * blend.' + axis + '));',
+                // '	normal' + axis + ' = map' + axis + ';'
 			];
 
             normals = normals.concat(normal);
@@ -75,7 +77,7 @@ class TriplanarNormalMapNode extends TempNode {
 
         let nodeFunction = blend.concat(uvs, perturbNormal2Arb);
         nodeFunction.unshift('vec3 normal_mapping(sampler2D texture, float textureScale, vec3 eyeNormal, vec3 localNormal, vec3 eyePosition, vec3 localPosition, vec2 normalScale, vec3 rotation) {');
-        nodeFunction = nodeFunction.concat(['    return normalize(normalx + normaly + normalz);', '}']);
+        nodeFunction = nodeFunction.concat(['    return wrong ? vec3(1.0, 0.0, 1.0) : vec3(normalize(normalx + normaly + normalz));', '}']);
 
         let normalMapping = new FunctionNode(nodeFunction.join('\n'), null, {derivatives: true});
 
