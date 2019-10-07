@@ -9,7 +9,7 @@ function NormalNode( scope ) {
 
 	TempNode.call( this, 'v3' );
 
-	this.scope = scope || NormalNode.LOCAL;
+	this.scope = scope || NormalNode.VIEW;
 
 }
 
@@ -41,13 +41,26 @@ NormalNode.prototype.generate = function ( builder, output ) {
 
 	switch ( this.scope ) {
 
+		case NormalNode.VIEW:
+
+			if ( builder.isShader( 'vertex' ) ) result = 'transformedNormal';
+			else result = 'geometryNormal';
+
+			break;
+
 		case NormalNode.LOCAL:
 
-			// to use vObjectNormal as vertex normal
-			builder.requires.normal = true;
+			if ( builder.isShader( 'vertex' ) ) {
 
-			// result = 'normal';
-			result = 'vObjectNormal';
+				result = 'objectNormal';
+
+			} else {
+
+				builder.requires.normal = true;
+
+				result = 'vObjectNormal';
+
+			}
 
 			break;
 
@@ -55,7 +68,7 @@ NormalNode.prototype.generate = function ( builder, output ) {
 
 			if ( builder.isShader( 'vertex' ) ) {
 
-				return '( modelMatrix * vec4( objectNormal, 0.0 ) ).xyz';
+				result = 'inverseTransformDirection( transformedNormal, viewMatrix ).xyz';
 
 			} else {
 
@@ -107,7 +120,13 @@ NormalNode.prototype.toJSON = function ( meta ) {
 
 NodeLib.addKeyword( 'normal', function () {
 
-	return new NormalNode();
+	return new NormalNode( NormalNode.VIEW );
+
+} );
+
+NodeLib.addKeyword( 'localNormal', function () {
+
+	return new NormalNode( NormalNode.NORMAL );
 
 } );
 
