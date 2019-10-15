@@ -37,6 +37,7 @@
 			var teapot, mesh;
 			var controls;
 			var move = false;
+			var animateRotation = false;
 			var rtTexture, rtMaterial;
 			var gui;
 			var library = {};
@@ -2582,6 +2583,8 @@
 
 					case 'node-normal':
 
+						animateRotation = true;
+
 						// MATERIAL
 
 						var node = new Nodes.NormalNode();
@@ -3369,6 +3372,14 @@
 				} else {
 
 					mesh.position.z = mesh.position.y = 0;
+
+				}
+
+				
+				if ( animateRotation ) {
+
+					var time = Date.now() * 0.001;
+					mesh.rotation.y = time;
 
 				}
 
