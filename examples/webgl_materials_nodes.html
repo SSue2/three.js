@@ -286,6 +286,7 @@
 			function updateMaterial() {
 
 				move = false;
+				animateRotation = false;
 
 				lightGroup.visible = true;
 
@@ -2608,6 +2609,8 @@
 
 						break;
 					case 'node-tint':
+
+						animateRotation = true;
 
 						var rotation = new Nodes.Vector3Node(0, 0, 0);
 						var scale = new Nodes.FloatNode(0.02);
