@@ -20,14 +20,10 @@ class TriplanarNormalMapNode extends TempNode {
     generate(builder, output) {
         let blend = [
 			'   vec3 blend = vec3(0.0);',
-			'   bool wrong = false;',
-            '   vec2 xzBlend = abs(normalize(localNormal.xz));',
-            '   blend.xz = max(vec2(0.0), xzBlend - 0.67);',
-            '   float dotProduct = dot(blend.xz, vec2(1.0));',
-            '   dotProduct = clamp(dotProduct, -1000.0, 1000.0);',
-            '   blend.xz /= dotProduct;',
-            '   blend.y = clamp((abs(localNormal.y) - 0.675) * 80.0, 0.0, 1.0);',
-            '   blend.xz *= (1.0 - blend.y);',
+            '   vec3 absNormal = abs(normalize(localNormal));',
+            '   blend.x = dot(absNormal, vec3(1.0, 0.0, 0.0));',
+            '   blend.y = dot(absNormal, vec3(0.0, 1.0, 0.0));',
+			'   blend.z = dot(absNormal, vec3(0.0, 0.0, 1.0));',
         ];
 
         let uvs = [
@@ -67,11 +63,6 @@ class TriplanarNormalMapNode extends TempNode {
                 '	map' + axis + '.xy *= normalScale;',
                 '	map' + axis + '.xy *= (float(gl_FrontFacing) * 2.0 - 1.0);',
                 '	vec3 normal' + axis + ' = normalize(tsn * (rot' + axis + ' * map' + axis + ' * blend.' + axis + '));',
-                '   wrong = false;',
-                '   wrong = wrong || !(normal' + axis + '.x >= -10.0 && normal' + axis + '.x <= 10.0);',
-                '   wrong = wrong || !(normal' + axis + '.y >= -10.0 && normal' + axis + '.y <= 10.0);',
-                '   wrong = wrong || !(normal' + axis + '.z >= -10.0 && normal' + axis + '.z <= 10.0);',
-                '	normal' + axis + ' = wrong ? vec3(0.0) : normal' + axis + ';'
 			];
 
             normals = normals.concat(normal);
@@ -83,7 +74,7 @@ class TriplanarNormalMapNode extends TempNode {
         nodeFunction.unshift('vec3 normal_mapping(sampler2D texture, float textureScale, vec3 eyeNormal, vec3 localNormal, vec3 eyePosition, vec3 localPosition, vec2 normalScale, vec3 rotation) {');
         nodeFunction = nodeFunction.concat([
             '   vec3 result = normalize(normalx + normaly + normalz);',
-            '    return result;', 
+            '    return result;',
             '}'
         ]);
 
