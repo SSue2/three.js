@@ -23,11 +23,14 @@ class TriplanarMapNode extends TempNode {
             // Asymmetric Triplanar Blend
             // https://medium.com/@bgolus/normal-mapping-for-a-triplanar-shader-10bf39dca05a
             '   vec3 blend = vec3(0.0);',
-            '   vec3 absNormal = abs(normalize(normal));',
-            '   blend.x = dot(absNormal, vec3(1.0, 0.0, 0.0));',
-            '   blend.y = dot(absNormal, vec3(0.0, 1.0, 0.0));',
-            '   blend.z = dot(absNormal, vec3(0.0, 0.0, 1.0));',
-
+            '   vec2 xzBlend = abs(normalize(normal.xz));',
+            '   blend.xz = max(vec2(0.0), xzBlend - 0.67);',
+            '   blend.xz /= dot(blend.xz, vec2(1.0));',
+            '   blend.y = clamp((abs(normal.y) - 0.675) * 80.0, 0.0, 1.0);',
+			'   blend.xz *= (1.0 - blend.y);',
+			'   blend.x = clamp(blend.x, 0.0, 1.0);',
+			'   blend.z = clamp(blend.z, 0.0, 1.0);',
+            
 			'   mat2 rotx = mat2(cos(rotation.x),-sin(rotation.x),',
 			'				     sin(rotation.x), cos(rotation.x));',
 			'   mat2 roty = mat2(cos(rotation.y),-sin(rotation.y),',
