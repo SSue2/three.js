@@ -61,8 +61,8 @@ export * from './procedural/CheckerNode';
 
 export * from './misc/TextureCubeUVNode';
 export * from './misc/TextureCubeNode';
-export * from './misc/NormalMapNode';
-export * from './misc/BumpMapNode';
+export * from './misc/TriplanarMapNode';
+export * from './misc/TriplanarNormalMapNode';
 
 // utils
 

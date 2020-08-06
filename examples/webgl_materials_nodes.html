@@ -34,6 +34,7 @@
 			var teapot, mesh;
 			var controls;
 			var move = false;
+			var animateRotation = false;
 			var rtTexture, rtMaterial;
 			var gui;
 			var library = {};
@@ -48,7 +49,7 @@
 				spherical: { url: 'textures/envmap.png' }
 			};
 
-			var param = { example: new URL( window.location.href ).searchParams.get( 'e' ) || 'mesh-standard' };
+			var param = { example: new URL( window.location.href ).searchParams.get( 'e' ) || 'node-tint' };
 
 			function getTexture( name ) {
 
@@ -214,6 +215,7 @@
 					'node / position': 'node-position',
 					'node / normal': 'node-normal',
 					'node / reflect': 'node-reflect',
+					'node / tint': 'node-tint',
 					'misc / sub-slot': 'sub-slot',
 					'misc / smoke': 'smoke',
 					'misc / firefly': 'firefly',
@@ -275,6 +277,7 @@
 			function updateMaterial() {
 
 				move = false;
+				animateRotation = false;
 
 				lightGroup.visible = true;
 
@@ -2572,6 +2575,8 @@
 
 					case 'node-normal':
 
+						animateRotation = true;
+
 						// MATERIAL
 
 						var node = new Nodes.NormalNode();
@@ -2593,6 +2598,57 @@
 
 						} );
 
+						break;
+					case 'node-tint':
+
+						animateRotation = true;
+
+						var rotation = new Nodes.Vector3Node(0, 0, 0);
+						var scale = new Nodes.FloatNode(0.02);
+						var strength = new Nodes.FloatNode(-0.2);
+
+						var tintFunction = new Nodes.FunctionNode( [
+								// Reference: TriangleBlurShader.js
+								"vec4 blurtexture(vec4 color, vec4 tint) {",
+								"	return color * tint;",
+								"}"
+							].join( "\n" ) );
+
+						var tintColor = new Nodes.ColorNode(0xffffff);
+
+						var tintedTexture = new Nodes.FunctionCallNode( tintFunction, {
+							color: new Nodes.TriplanarMapNode(new Nodes.TextureNode( getTexture( "brick" ) ), scale, rotation),
+							tint: tintColor,
+						} );
+
+						// MATERIAL
+						mtl = new Nodes.StandardNodeMaterial();
+						mtl.color = tintedTexture;
+						mtl.normal = new Nodes.TriplanarNormalMapNode( new Nodes.TextureNode( getTexture( "decalNormal" ) ), scale, strength, rotation );
+						mtl.roughness = new Nodes.FloatNode(0.1);
+						
+						// GUI
+
+						addGui( 'tint', 0xffffff, function ( val ) {
+							tintColor.value.setHex(val);
+						},true );
+
+						addGui( 'roughness', mtl.roughness.value, function ( val ) {
+							mtl.roughness.value = val
+						}, false, 0, 1 );
+						addGui( 'scale', scale.value, function ( val ) {
+							scale.value = val;
+						}, false, 0.01, 0.05 );
+						addGui( 'rotation x', rotation.value.x / Math.PI * 180, function ( val ) {
+							rotation.value.setX(val / 180 * Math.PI);
+						}, false, 0, 360 );
+						addGui( 'rotation y', rotation.value.y / Math.PI * 180, function ( val ) {
+							rotation.value.setY(val / 180 * Math.PI);
+						}, false, 0, 360 );
+						addGui( 'rotation z', rotation.value.z / Math.PI * 180, function ( val ) {
+							rotation.value.setZ(val / 180 * Math.PI);
+						}, false, 0, 360 );
+						
 						break;
 
 					case 'node-reflect':
@@ -3341,6 +3397,14 @@
 				} else {
 
 					mesh.position.z = mesh.position.y = 0;
+
+				}
+
+				
+				if ( animateRotation ) {
+
+					var time = Date.now() * 0.001;
+					mesh.rotation.y = time;
 
 				}
 

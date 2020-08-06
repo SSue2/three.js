@@ -17,11 +17,17 @@ NormalNode.prototype = Object.create( TempNode.prototype );
 NormalNode.prototype.constructor = NormalNode;
 NormalNode.prototype.nodeType = "Normal";
 
-NormalNode.prototype.getShared = function () {
+NormalNode.prototype.getShared = function ( /* builder */ ) {
 
-	// if shared is false, TempNode will not create temp variable (for optimization)
+	switch ( this.scope ) {
 
-	return this.scope === NormalNode.WORLD;
+		case NormalNode.WORLD:
+
+			return true;
+
+	}
+
+	return false;
 
 };
 
@@ -84,6 +90,12 @@ NormalNode.prototype.generate = function ( builder, output ) {
 
 			break;
 
+		case NormalNode.VIEW:
+
+			result = 'vNormal';
+
+			break;
+
 	}
 
 	return builder.format( result, this.getType( builder ), output );
@@ -116,7 +128,7 @@ NormalNode.prototype.toJSON = function ( meta ) {
 
 };
 
-NodeLib.addKeyword( 'viewNormal', function () {
+NodeLib.addKeyword( 'normal', function () {
 
 	return new NormalNode( NormalNode.VIEW );
 
@@ -131,6 +143,12 @@ NodeLib.addKeyword( 'localNormal', function () {
 NodeLib.addKeyword( 'worldNormal', function () {
 
 	return new NormalNode( NormalNode.WORLD );
+
+} );
+
+NodeLib.addKeyword( 'viewNormal', function () {
+
+	return new NormalNode( NormalNode.VIEW );
 
 } );
 
